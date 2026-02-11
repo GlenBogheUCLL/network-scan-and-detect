@@ -39,7 +39,27 @@ def main():
                 result = sock.connect_ex((target_ip, port))
 
                 if result == 0:
-                    print(f"OPEN PORT: {port}")
+                    try:
+                        if port == 80 or port == 8000: # temporarily use these ports for HTTP banner grabbing, later can be made dynamic
+                            sock.sendall(b"HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+
+                        banner = sock.recv(1024).decode('utf-8', errors='ignore')
+
+                        if banner:
+                            lines = banner.split("\r\n")
+                            status_line = lines[0] if len(lines) > 0 else ""
+                            
+                            server_line = ""
+                            for line in lines:
+                                if line.lower().startswith("server:"):
+                                    server_line = line
+                                    break
+
+                            print(f"OPEN PORT: {port} - Banner: {status_line} | {server_line}")
+                        else:
+                            print(f"OPEN PORT: {port} - Banner: No banner received")
+                    except Exception:
+                        print(f"OPEN PORT: {port} - Banner: Error retrieving banner")
                     open_ports += 1
 
         except Exception:
