@@ -1,5 +1,6 @@
 import sys
 import socket
+import time
 
 def main():
     if len(sys.argv) != 4:
@@ -13,6 +14,8 @@ def main():
     print(f"Target: {target_ip}")
     print(f"Port range: {start_port}-{end_port}")
     
+    start_time = time.time()
+
     for port in range(start_port, end_port + 1):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,6 +30,9 @@ def main():
             
         except Exception:
             pass #continue scanning even if an error occurs
+    
+    end_time = time.time()
+    print(f"\nScan completed in {end_time - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
