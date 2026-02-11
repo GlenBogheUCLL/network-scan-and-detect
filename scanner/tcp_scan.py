@@ -12,22 +12,21 @@ def main():
 
     print(f"Target: {target_ip}")
     print(f"Port range: {start_port}-{end_port}")
+    
+    for port in range(start_port, end_port + 1):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)  # Set a timeout for the connection attempt
 
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)  # Set a timeout for the connection attempt
+            result = sock.connect_ex((target_ip, port))
 
-        result = sock.connect_ex((target_ip, start_port))
+            if result == 0:
+                print(f"OPEN PORT: {port}")
 
-        if result == 0:
-            print(f"Port {start_port} is open.")
-        else:
-            print(f"Port {start_port} is closed or filtered.")
-        
-        sock.close()
-        
-    except Exception as e:
-        print(f"Error: {e}")
+            sock.close()
+            
+        except Exception:
+            pass #continue scanning even if an error occurs
 
 if __name__ == "__main__":
     main()
