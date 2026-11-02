@@ -1,2 +1,4 @@
 *.json
 scanner/__pycache__/
+.env
+backend/__pycache__/

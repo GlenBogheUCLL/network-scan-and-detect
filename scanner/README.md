@@ -92,6 +92,39 @@ explicit penalties for incomplete fingerprints, unknown services, exposed FTP,
 Telnet, rlogin or Redis, and optional internet exposure. Scores are capped at
 10, and the overall score is the highest service score rather than an average.
 
+Backend
+-------
+
+The project includes a FastAPI backend with PostgreSQL configuration. Install
+the dependencies, set `DATABASE_URL`, and start the API from the repository
+root:
+
+```powershell
+pip install -r requirements.txt
+$env:DATABASE_URL = "postgresql+psycopg://scanner:scanner@localhost:5432/network_scan"
+uvicorn backend.main:app --reload
+```
+
+Submit vulnerability results to `POST /scans`. The API stores scans, ports,
+vulnerabilities, and risk assessments, and exposes saved scans through
+`GET /scans/{scan_id}`. Interactive API documentation is available at
+`http://127.0.0.1:8000/docs`.
+
+PostgreSQL and Grafana
+----------------------
+
+Copy `.env.example` to `.env` and replace the example passwords. Start the
+database and Grafana with:
+
+```powershell
+docker compose up -d
+```
+
+PostgreSQL is available on `localhost:5432` and Grafana on
+`http://127.0.0.1:3000`. Grafana provisions the PostgreSQL datasource
+automatically. Stop the services with `docker compose down`; add `-v` only
+when you intentionally want to delete the stored database and dashboard data.
+
 -------------------------
 Technical Goals
 -------------------------
