@@ -38,6 +38,24 @@ The Detection Engine analyzes logs for suspicious patterns.
 
 Alerts are generated based on defined behavioral rules.
 
+Usage
+-----
+
+Scan a target for open TCP ports and basic service information:
+
+```powershell
+python scanner/tcp_scan.py 127.0.0.1 1 1024
+```
+
+Save structured results for later use by the risk engine or dashboard:
+
+```powershell
+python scanner/tcp_scan.py 127.0.0.1 1 1024 --output scan-results.json
+```
+
+The JSON results include the port, protocol, state, detected service, optional
+product and version, and the received banner.
+
 -------------------------
 Technical Goals
 -------------------------
