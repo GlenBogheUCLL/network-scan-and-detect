@@ -1,55 +1,51 @@
 {
   "target": "127.0.0.1",
   "internet_facing": false,
-  "overall_risk_score": 2.5,
-  "overall_severity": "low",
+  "overall_risk_score": 5.0,
+  "overall_severity": "medium",
   "results": [
     {
       "port": 135,
-      "service": "unknown",
-      "risk_score": 2.5,
+      "service": "msrpc",
+      "risk_score": 1.5,
       "severity": "low",
       "highest_cvss": 0.0,
       "vulnerability_count": 0,
       "reasons": [
-        "Incomplete product/version fingerprint (+1.5).",
-        "Unknown service (+1.0)."
+        "Incomplete product/version fingerprint (+1.5)."
       ]
     },
     {
       "port": 445,
-      "service": "unknown",
-      "risk_score": 2.5,
+      "service": "smb",
+      "risk_score": 1.5,
       "severity": "low",
       "highest_cvss": 0.0,
       "vulnerability_count": 0,
       "reasons": [
-        "Incomplete product/version fingerprint (+1.5).",
-        "Unknown service (+1.0)."
+        "Incomplete product/version fingerprint (+1.5)."
       ]
     },
     {
       "port": 902,
-      "service": "unknown",
-      "risk_score": 2.5,
-      "severity": "low",
+      "service": "vmware-auth",
+      "risk_score": 0.0,
+      "severity": "none",
       "highest_cvss": 0.0,
       "vulnerability_count": 0,
       "reasons": [
-        "Incomplete product/version fingerprint (+1.5).",
-        "Unknown service (+1.0)."
+        "No CVEs or exposure penalties were identified."
       ]
     },
     {
       "port": 912,
-      "service": "unknown",
-      "risk_score": 2.5,
-      "severity": "low",
-      "highest_cvss": 0.0,
-      "vulnerability_count": 0,
+      "service": "vmware-auth",
+      "risk_score": 5.0,
+      "severity": "medium",
+      "highest_cvss": 5.0,
+      "vulnerability_count": 2,
       "reasons": [
-        "Incomplete product/version fingerprint (+1.5).",
-        "Unknown service (+1.0)."
+        "Highest CVSS score is 5.0."
       ]
     }
   ]

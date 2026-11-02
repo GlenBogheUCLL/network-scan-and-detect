@@ -9,37 +9,41 @@
       "port": 135,
       "protocol": "tcp",
       "state": "open",
-      "service": "unknown",
-      "product": null,
+      "service": "msrpc",
+      "product": "Microsoft RPC",
       "version": null,
-      "banner": null
+      "banner": null,
+      "confidence": 0.7
     },
     {
       "port": 445,
       "protocol": "tcp",
       "state": "open",
-      "service": "unknown",
-      "product": null,
+      "service": "smb",
+      "product": "Microsoft SMB",
       "version": null,
-      "banner": null
+      "banner": null,
+      "confidence": 0.7
     },
     {
       "port": 902,
       "protocol": "tcp",
       "state": "open",
-      "service": "unknown",
-      "product": null,
-      "version": null,
-      "banner": "220 VMware Authentication Daemon Version 1.10: SSL Required, ServerDaemonProtocol:SOAP, MKSDisplayProtocol:VNC , , NFCSSL supported/t,"
+      "service": "vmware-auth",
+      "product": "VMware Authentication Daemon",
+      "version": "1.10",
+      "banner": "220 VMware Authentication Daemon Version 1.10: SSL Required, ServerDaemonProtocol:SOAP, MKSDisplayProtocol:VNC , , NFCSSL supported/t,",
+      "confidence": 0.95
     },
     {
       "port": 912,
       "protocol": "tcp",
       "state": "open",
-      "service": "unknown",
-      "product": null,
-      "version": null,
-      "banner": "220 VMware Authentication Daemon Version 1.0, ServerDaemonProtocol:SOAP, MKSDisplayProtocol:VNC , , ,"
+      "service": "vmware-auth",
+      "product": "VMware Authentication Daemon",
+      "version": "1.0",
+      "banner": "220 VMware Authentication Daemon Version 1.0, ServerDaemonProtocol:SOAP, MKSDisplayProtocol:VNC , , ,",
+      "confidence": 0.95
     }
   ]
 }

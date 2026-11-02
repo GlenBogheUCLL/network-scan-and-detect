@@ -16,6 +16,8 @@ KNOWN_SERVICES = {
     25: "smtp",
     53: "dns",
     80: "http",
+    135: "msrpc",
+    445: "smb",
     110: "pop3",
     143: "imap",
     443: "https",
@@ -24,6 +26,8 @@ KNOWN_SERVICES = {
     6379: "redis",
     8080: "http",
     8443: "https",
+    902: "vmware-auth",
+    912: "vmware-auth",
 }
 
 
@@ -36,6 +40,7 @@ class ScanResult:
     product: Optional[str] = None
     version: Optional[str] = None
     banner: Optional[str] = None
+    confidence: float = 0.0
 
     def to_dict(self):
         return asdict(self)
@@ -57,7 +62,7 @@ def validate_ports(start_port, end_port):
 
 def grab_banner(sock, port):
     try:
-        if port in [80, 8000, 8080]:
+        if port in [80, 8000, 8080, 8443]:
             sock.sendall(b"HEAD / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
 
         banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
@@ -84,6 +89,7 @@ def _extract_product_and_version(service, banner):
         source = banner.split(" | ", 1)[1].split(":", 1)[-1].strip()
 
     patterns = [
+        r"(?P<product>VMware Authentication Daemon)[ :]+Version[ /](?P<version>\d+(?:\.\d+)+)",
         r"(?P<product>[A-Za-z][\w.-]*)/(?P<version>\d+(?:\.\d+)+)",
         r"(?P<product>OpenSSH)[_ /](?P<version>\d+(?:\.\d+)+)",
         r"(?P<product>nginx)[/ ](?P<version>\d+(?:\.\d+)+)",
@@ -99,6 +105,17 @@ def _extract_product_and_version(service, banner):
 def fingerprint_service(port, banner):
     service = KNOWN_SERVICES.get(port, "unknown")
     product, version = _extract_product_and_version(service, banner)
+    confidence = 0.1 if service == "unknown" else 0.55
+
+    if port == 135:
+        product = "Microsoft RPC"
+        confidence = 0.65
+    elif port == 445:
+        product = "Microsoft SMB"
+        confidence = 0.65
+    elif port in [902, 912]:
+        product = product or "VMware Authentication Daemon"
+        confidence = 0.8
 
     if banner:
         lower_banner = banner.lower()
@@ -112,8 +129,14 @@ def fingerprint_service(port, banner):
         )
         if banner_service:
             service = banner_service
+            confidence = 0.8
 
-    return service, product, version
+    if product and version:
+        confidence = 0.95
+    elif product:
+        confidence = max(confidence, 0.7)
+
+    return service, product, version, confidence
 
 
 def scan_single_port(target_ip, port):
@@ -124,7 +147,7 @@ def scan_single_port(target_ip, port):
                 return None
 
             banner = grab_banner(sock, port)
-            service, product, version = fingerprint_service(port, banner)
+            service, product, version, confidence = fingerprint_service(port, banner)
             return ScanResult(
                 port=port,
                 protocol="tcp",
@@ -133,6 +156,7 @@ def scan_single_port(target_ip, port):
                 product=product,
                 version=version,
                 banner=banner,
+                confidence=confidence,
             )
     except OSError:
         return None

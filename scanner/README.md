@@ -54,7 +54,11 @@ python scanner/tcp_scan.py 127.0.0.1 1 1024 --output scan-results.json
 ```
 
 The JSON results include the port, protocol, state, detected service, optional
-product and version, and the received banner.
+product and version, the fingerprint confidence, and the received banner.
+
+The scanner includes protocol-specific fingerprints for HTTP, SSH, SMB/RPC and
+VMware Authentication Daemon. A confidence value indicates how strongly the
+service and product were identified; it does not represent exploitability.
 
 Look up CVEs for results with a detected product and version:
 
