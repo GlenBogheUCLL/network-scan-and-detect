@@ -110,6 +110,19 @@ vulnerabilities, and risk assessments, and exposes saved scans through
 `GET /scans/{scan_id}`. Interactive API documentation is available at
 `http://127.0.0.1:8000/docs`.
 
+The complete local stack also includes the API and a provisioned Grafana
+dashboard:
+
+```powershell
+docker compose up -d --build
+Invoke-WebRequest -Method Post -Uri http://127.0.0.1:8000/scans `
+  -ContentType "application/json" -InFile vulnerability-results.json
+```
+
+Open `http://127.0.0.1:3000/d/network-scan-overview` to view the dashboard.
+The default dashboard shows the latest overall score, severity distribution,
+service risks, and CVEs.
+
 PostgreSQL and Grafana
 ----------------------
 
@@ -124,6 +137,8 @@ PostgreSQL is available on `localhost:5432` and Grafana on
 `http://127.0.0.1:3000`. Grafana provisions the PostgreSQL datasource
 automatically. Stop the services with `docker compose down`; add `-v` only
 when you intentionally want to delete the stored database and dashboard data.
+If port 5432 is already used locally, set `POSTGRES_PORT=5433` before starting;
+the database remains available to the other containers at `postgres:5432`.
 
 -------------------------
 Technical Goals
