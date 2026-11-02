@@ -56,6 +56,17 @@ python scanner/tcp_scan.py 127.0.0.1 1 1024 --output scan-results.json
 The JSON results include the port, protocol, state, detected service, optional
 product and version, and the received banner.
 
+Look up CVEs for results with a detected product and version:
+
+```powershell
+python scanner/nvd_client.py scan-results.json --output vulnerability-results.json
+```
+
+The NVD client uses the public NVD API. Set `NVD_API_KEY` before running if you
+have an API key, and note that only exact product/version fingerprints are
+queried. Results without a detected product and version are retained with an
+empty vulnerability list.
+
 -------------------------
 Technical Goals
 -------------------------
