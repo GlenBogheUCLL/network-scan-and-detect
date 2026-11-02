@@ -1,8 +1,11 @@
 import json
 import socket
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 
@@ -30,9 +33,15 @@ def create_app(database_url=None):
         yield
 
     app = FastAPI(title="Network Scan and Detect API", lifespan=lifespan)
+    frontend_path = Path(__file__).parent.parent / "frontend"
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
     def get_session():
         yield from session_dependency(session_factory)
+
+    @app.get("/", include_in_schema=False)
+    def frontend():
+        return FileResponse(frontend_path / "index.html")
 
     @app.get("/health")
     def health():
@@ -50,7 +59,10 @@ def create_app(database_url=None):
                 detail="start_port must be less than or equal to end_port.",
             )
         try:
-            socket.gethostbyname(payload.target)
+            try:
+                socket.gethostbyname(payload.target)
+            except socket.gaierror as error:
+                raise ValueError("Invalid IP address or hostname.") from error
             if payload.start_port < 1 or payload.end_port > 65535:
                 raise ValueError("Port range must be between 1 and 65535.")
             scan_results = scan_ports(

@@ -1,0 +1,47 @@
+:root {
+  color-scheme: dark;
+  --background: #0c1222;
+  --surface: #151e33;
+  --border: #2b3a5d;
+  --text: #edf2ff;
+  --muted: #9eaccb;
+  --accent: #6ea8fe;
+  --danger: #ff7b8b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1a2a4a, var(--background) 48%);
+  color: var(--text);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+
+.shell { margin: 0 auto; max-width: 980px; padding: 48px 20px; }
+.hero { margin-bottom: 32px; }
+.eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .16em; }
+h1 { font-size: clamp(32px, 6vw, 56px); line-height: 1.05; margin: 8px 0 16px; }
+h2 { margin-top: 0; }
+.hero p { color: var(--muted); }
+.card, .metric { background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+form { display: grid; gap: 18px; max-width: 620px; }
+label { color: var(--muted); display: grid; gap: 7px; }
+input { background: #0d162a; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; padding: 11px 12px; }
+.field-row, .summary-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+.summary-grid { grid-template-columns: repeat(3, 1fr); margin: 24px 0; }
+.checkbox { display: flex; align-items: center; gap: 8px; }
+.checkbox input { accent-color: var(--accent); }
+button { background: var(--accent); border: 0; border-radius: 8px; color: #07101f; cursor: pointer; font: inherit; font-weight: 700; padding: 12px 18px; width: fit-content; }
+button:disabled { cursor: wait; opacity: .6; }
+.status { color: var(--muted); min-height: 24px; }
+.status.error { color: var(--danger); }
+.metric span { color: var(--muted); display: block; font-size: 13px; }
+.metric strong { display: block; font-size: 30px; margin-top: 6px; text-transform: capitalize; }
+.service { border-top: 1px solid var(--border); display: grid; gap: 4px; padding: 16px 0; }
+.service:first-child { border-top: 0; padding-top: 0; }
+.service-title { font-weight: 700; }
+.service-meta, .service-reasons { color: var(--muted); font-size: 14px; }
+@media (max-width: 640px) {
+  .field-row, .summary-grid { grid-template-columns: 1fr; }
+}

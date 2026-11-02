@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Network Scan and Detect</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">NETWORK SECURITY</p>
+        <h1>Network Scan and Detect</h1>
+        <p>Scan a target, identify exposed services, and review its risk.</p>
+      </header>
+
+      <section class="card">
+        <h2>Start a scan</h2>
+        <form id="scan-form">
+          <label>
+            Target
+            <input id="target" name="target" value="127.0.0.1" required>
+          </label>
+          <div class="field-row">
+            <label>
+              Start port
+              <input id="start-port" name="start_port" type="number" min="1" max="65535" value="1" required>
+            </label>
+            <label>
+              End port
+              <input id="end-port" name="end_port" type="number" min="1" max="65535" value="1024" required>
+            </label>
+          </div>
+          <label class="checkbox">
+            <input id="internet-facing" name="internet_facing" type="checkbox">
+            Internet-facing target
+          </label>
+          <button type="submit">Run scan</button>
+        </form>
+        <p id="status" class="status" role="status"></p>
+      </section>
+
+      <section id="results" class="results" hidden>
+        <div class="summary-grid">
+          <div class="metric">
+            <span>Overall risk</span>
+            <strong id="overall-score">-</strong>
+          </div>
+          <div class="metric">
+            <span>Severity</span>
+            <strong id="overall-severity">-</strong>
+          </div>
+          <div class="metric">
+            <span>Open services</span>
+            <strong id="service-count">-</strong>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Detected services</h2>
+          <div id="service-list"></div>
+        </div>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

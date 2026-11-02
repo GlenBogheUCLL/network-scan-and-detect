@@ -22,6 +22,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
+    def test_frontend_is_served(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Network Scan and Detect", response.text)
+
     def test_create_and_get_scan(self):
         payload = {
             "target": "127.0.0.1",

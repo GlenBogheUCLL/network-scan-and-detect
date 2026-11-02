@@ -134,6 +134,9 @@ Open `http://127.0.0.1:3000/d/network-scan-overview` to view the dashboard.
 The default dashboard shows the latest overall score, severity distribution,
 service risks, and CVEs.
 
+The API also serves a scan form at `http://127.0.0.1:8000/`. Enter a target and
+port range there to run the complete pipeline without using Swagger.
+
 PostgreSQL and Grafana
 ----------------------
 
