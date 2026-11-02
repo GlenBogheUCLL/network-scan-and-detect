@@ -89,6 +89,38 @@ class NvdClientTests(unittest.TestCase):
             ["cpe:2.3:a:openbsd:openssh:9.6:*:*:*:*:*:*:*"],
         )
 
+    def test_product_mapping_requires_exact_mapped_cpe(self):
+        requests = []
+
+        def requester(request, timeout):
+            requests.append(request)
+            return FakeResponse(
+                {
+                    "products": [
+                        {
+                            "cpe": {
+                                "cpeName": [
+                                    {
+                                        "cpeName": (
+                                            "cpe:2.3:a:vmware:workstation:1.0:"
+                                            "*:*:*:*:*:*:*"
+                                        )
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+                if "/cpes/2.0" in request.full_url
+                else {"vulnerabilities": []}
+            )
+
+        client = NvdClient(request_delay=0, requester=requester)
+
+        self.assertEqual(client.search("VMware Authentication Daemon", "1.0"), [])
+        query = parse_qs(urlparse(requests[0].full_url).query)["keywordSearch"][0]
+        self.assertIn("vmware workstation 1.0", query)
+
     def test_lookup_only_queries_open_results_with_complete_fingerprint(self):
         def requester(request, timeout):
             if "/cpes/2.0" in request.full_url:

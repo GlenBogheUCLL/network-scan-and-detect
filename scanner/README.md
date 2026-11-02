@@ -70,7 +70,9 @@ The NVD client uses the public NVD API. It first resolves an exact CPE 2.3
 identifier for the detected product and version, then queries CVEs using that
 exact CPE. Set `NVD_API_KEY` before running if you have an API key. Results
 without a detected product and version, or without an exact CPE match, are
-retained with an empty vulnerability list.
+retained with an empty vulnerability list. Known ambiguous product names use
+explicit vendor/product mappings and are never treated as an exact match
+unless the CPE vendor, product and version all match.
 
 Calculate transparent risk scores from the vulnerability results:
 

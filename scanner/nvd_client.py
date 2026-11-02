@@ -11,6 +11,14 @@ from urllib.request import Request, urlopen
 
 NVD_CVES_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_CPES_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0"
+PRODUCT_CPE_MAPPINGS = {
+    "vmware authentication daemon": [
+        ("vmware", "workstation"),
+        ("vmware", "player"),
+        ("vmware", "server"),
+        ("vmware", "authd"),
+    ],
+}
 
 
 class NvdClientError(RuntimeError):
@@ -80,36 +88,49 @@ class NvdClient:
 
     def resolve_cpe(self, product: str, version: str) -> Optional[str]:
         """Resolve an exact NVD CPE 2.3 name for a product and version."""
-        query = urlencode({"keywordSearch": f"{product} {version}"})
-        request = Request(
-            f"{NVD_CPES_URL}?{query}",
-            headers=self._headers(),
-        )
-        try:
-            with self.requester(request, timeout=self.request_timeout) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError) as error:
-            raise NvdClientError(f"NVD CPE request failed: {error}") from error
-        except (UnicodeDecodeError, json.JSONDecodeError) as error:
-            raise NvdClientError("NVD returned an invalid CPE response.") from error
+        expected_products = self._expected_cpe_products(product)
+        for vendor, cpe_product in expected_products:
+            cpe_query_product = (
+                cpe_product if vendor else product
+            )
+            cpe_query = f"{vendor} {cpe_query_product} {version}".strip()
+            query = urlencode({"keywordSearch": cpe_query})
+            request = Request(f"{NVD_CPES_URL}?{query}", headers=self._headers())
+            try:
+                with self.requester(request, timeout=self.request_timeout) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+            except (HTTPError, URLError, TimeoutError) as error:
+                raise NvdClientError(f"NVD CPE request failed: {error}") from error
+            except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                raise NvdClientError("NVD returned an invalid CPE response.") from error
 
-        if not isinstance(payload, dict) or not isinstance(payload.get("products"), list):
-            raise NvdClientError("NVD CPE response is missing the products list.")
-
-        normalized_product = self._normalize_cpe_part(product)
-        for item in payload["products"]:
-            cpe_uri = self._extract_cpe_uri(item)
-            if not cpe_uri:
-                continue
-            parts = cpe_uri.split(":")
-            if (
-                len(parts) >= 6
-                and parts[0:3] == ["cpe", "2.3", "a"]
-                and parts[4] == normalized_product
-                and parts[5] == version
+            if not isinstance(payload, dict) or not isinstance(
+                payload.get("products"), list
             ):
-                return cpe_uri
+                raise NvdClientError("NVD CPE response is missing the products list.")
+
+            for item in payload["products"]:
+                cpe_uri = self._extract_cpe_uri(item)
+                if not cpe_uri:
+                    continue
+                parts = cpe_uri.split(":")
+                if (
+                    len(parts) >= 6
+                    and parts[0:3] == ["cpe", "2.3", "a"]
+                    and (not vendor or parts[3] == vendor)
+                    and parts[4] == cpe_product
+                    and parts[5] == version
+                ):
+                    return cpe_uri
         return None
+
+    @staticmethod
+    def _expected_cpe_products(product):
+        mappings = PRODUCT_CPE_MAPPINGS.get(product.lower())
+        if mappings:
+            return mappings
+        normalized_product = NvdClient._normalize_cpe_part(product)
+        return [("", normalized_product)]
 
     def lookup_scan_results(self, scan_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         results = scan_data.get("results")
