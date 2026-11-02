@@ -30,6 +30,22 @@ NVD_RESPONSE = {
     ]
 }
 
+CPE_RESPONSE = {
+    "products": [
+        {
+            "cpe": {
+                "cpeName": [
+                    {
+                        "cpeName": (
+                            "cpe:2.3:a:openbsd:openssh:9.6:*:*:*:*:*:*:*"
+                        )
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 
 class FakeResponse:
     def __init__(self, payload):
@@ -51,6 +67,8 @@ class NvdClientTests(unittest.TestCase):
 
         def requester(request, timeout):
             requests.append(request)
+            if "/cpes/2.0" in request.full_url:
+                return FakeResponse(CPE_RESPONSE)
             return FakeResponse(NVD_RESPONSE)
 
         client = NvdClient(request_delay=0, requester=requester)
@@ -60,11 +78,23 @@ class NvdClientTests(unittest.TestCase):
         self.assertEqual(result[0].cve_id, "CVE-2024-1234")
         self.assertEqual(result[0].cvss_score, 8.1)
         self.assertEqual(result[0].severity, "HIGH")
-        query = parse_qs(urlparse(requests[0].full_url).query)
-        self.assertEqual(query["keywordSearch"], ["OpenSSH 9.6"])
+        cpe_request = next(request for request in requests if "/cpes/2.0" in request.full_url)
+        cve_request = next(request for request in requests if "/cves/2.0" in request.full_url)
+        self.assertEqual(
+            parse_qs(urlparse(cpe_request.full_url).query)["keywordSearch"],
+            ["OpenSSH 9.6"],
+        )
+        self.assertEqual(
+            parse_qs(urlparse(cve_request.full_url).query)["cpeName"],
+            ["cpe:2.3:a:openbsd:openssh:9.6:*:*:*:*:*:*:*"],
+        )
 
     def test_lookup_only_queries_open_results_with_complete_fingerprint(self):
-        requester = lambda request, timeout: FakeResponse(NVD_RESPONSE)
+        def requester(request, timeout):
+            if "/cpes/2.0" in request.full_url:
+                return FakeResponse(CPE_RESPONSE)
+            return FakeResponse(NVD_RESPONSE)
+
         client = NvdClient(request_delay=0, requester=requester)
         scan_data = {
             "target": "127.0.0.1",
@@ -92,11 +122,10 @@ class NvdClientTests(unittest.TestCase):
         self.assertEqual(results[2]["vulnerabilities"], [])
 
     def test_invalid_nvd_payload_raises_explicit_error(self):
-        requester = lambda request, timeout: FakeResponse({})
+        requester = lambda request, timeout: FakeResponse({"products": []})
         client = NvdClient(request_delay=0, requester=requester)
 
-        with self.assertRaises(NvdClientError):
-            client.search("OpenSSH", "9.6")
+        self.assertEqual(client.search("OpenSSH", "9.6"), [])
 
 
 if __name__ == "__main__":

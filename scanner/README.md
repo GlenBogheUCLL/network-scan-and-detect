@@ -66,10 +66,11 @@ Look up CVEs for results with a detected product and version:
 python scanner/nvd_client.py scan-results.json --output vulnerability-results.json
 ```
 
-The NVD client uses the public NVD API. Set `NVD_API_KEY` before running if you
-have an API key, and note that only exact product/version fingerprints are
-queried. Results without a detected product and version are retained with an
-empty vulnerability list.
+The NVD client uses the public NVD API. It first resolves an exact CPE 2.3
+identifier for the detected product and version, then queries CVEs using that
+exact CPE. Set `NVD_API_KEY` before running if you have an API key. Results
+without a detected product and version, or without an exact CPE match, are
+retained with an empty vulnerability list.
 
 Calculate transparent risk scores from the vulnerability results:
 

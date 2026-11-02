@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 
 NVD_CVES_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+NVD_CPES_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0"
 
 
 class NvdClientError(RuntimeError):
@@ -45,7 +46,11 @@ class NvdClient:
         if not product or not version:
             raise ValueError("Both product and version are required for an NVD search.")
 
-        query = urlencode({"keywordSearch": f"{product} {version}"})
+        cpe_name = self.resolve_cpe(product, version)
+        if not cpe_name:
+            return []
+
+        query = urlencode({"cpeName": cpe_name})
         request = Request(
             f"{NVD_CVES_URL}?{query}",
             headers=self._headers(),
@@ -72,6 +77,39 @@ class NvdClient:
         if self.request_delay > 0:
             time.sleep(self.request_delay)
         return vulnerabilities
+
+    def resolve_cpe(self, product: str, version: str) -> Optional[str]:
+        """Resolve an exact NVD CPE 2.3 name for a product and version."""
+        query = urlencode({"keywordSearch": f"{product} {version}"})
+        request = Request(
+            f"{NVD_CPES_URL}?{query}",
+            headers=self._headers(),
+        )
+        try:
+            with self.requester(request, timeout=self.request_timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError, TimeoutError) as error:
+            raise NvdClientError(f"NVD CPE request failed: {error}") from error
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise NvdClientError("NVD returned an invalid CPE response.") from error
+
+        if not isinstance(payload, dict) or not isinstance(payload.get("products"), list):
+            raise NvdClientError("NVD CPE response is missing the products list.")
+
+        normalized_product = self._normalize_cpe_part(product)
+        for item in payload["products"]:
+            cpe_uri = self._extract_cpe_uri(item)
+            if not cpe_uri:
+                continue
+            parts = cpe_uri.split(":")
+            if (
+                len(parts) >= 6
+                and parts[0:3] == ["cpe", "2.3", "a"]
+                and parts[4] == normalized_product
+                and parts[5] == version
+            ):
+                return cpe_uri
+        return None
 
     def lookup_scan_results(self, scan_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         results = scan_data.get("results")
@@ -101,6 +139,21 @@ class NvdClient:
         if self.api_key:
             headers["apiKey"] = self.api_key
         return headers
+
+    @staticmethod
+    def _normalize_cpe_part(value):
+        return value.lower().replace(" ", "_").replace("-", "_")
+
+    @staticmethod
+    def _extract_cpe_uri(item):
+        if not isinstance(item, dict):
+            return None
+        cpe = item.get("cpe", {})
+        names = cpe.get("cpeName", []) if isinstance(cpe, dict) else []
+        if not names or not isinstance(names[0], dict):
+            return None
+        uri = names[0].get("cpeName")
+        return uri if isinstance(uri, str) else None
 
     @staticmethod
     def _parse_vulnerability(item):

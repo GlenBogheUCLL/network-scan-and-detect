@@ -1,8 +1,8 @@
 {
   "target": "127.0.0.1",
   "internet_facing": false,
-  "overall_risk_score": 5.0,
-  "overall_severity": "medium",
+  "overall_risk_score": 1.5,
+  "overall_severity": "low",
   "results": [
     {
       "port": 135,
@@ -40,12 +40,12 @@
     {
       "port": 912,
       "service": "vmware-auth",
-      "risk_score": 5.0,
-      "severity": "medium",
-      "highest_cvss": 5.0,
-      "vulnerability_count": 2,
+      "risk_score": 0.0,
+      "severity": "none",
+      "highest_cvss": 0.0,
+      "vulnerability_count": 0,
       "reasons": [
-        "Highest CVSS score is 5.0."
+        "No CVEs or exposure penalties were identified."
       ]
     }
   ]
