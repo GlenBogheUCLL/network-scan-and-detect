@@ -1,4 +1,5 @@
 import json
+import socket
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -9,7 +10,15 @@ from scanner.risk_engine import assess_scan
 
 from .database import Base, create_database, session_dependency
 from .models import PortResult, Scan, Vulnerability
-from .schemas import PortResponse, ScanInput, ScanResponse, VulnerabilityResponse
+from scanner.nvd_client import NvdClient
+from .schemas import (
+    PortResponse,
+    ScanInput,
+    ScanRequest,
+    ScanResponse,
+    VulnerabilityResponse,
+)
+from scanner.tcp_scan import scan_ports
 
 
 def create_app(database_url=None):
@@ -30,53 +39,55 @@ def create_app(database_url=None):
         return {"status": "ok"}
 
     @app.post(
+        "/scan",
+        response_model=ScanResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def run_scan(payload: ScanRequest, session: Session = Depends(get_session)):
+        if payload.start_port > payload.end_port:
+            raise HTTPException(
+                status_code=422,
+                detail="start_port must be less than or equal to end_port.",
+            )
+        try:
+            socket.gethostbyname(payload.target)
+            if payload.start_port < 1 or payload.end_port > 65535:
+                raise ValueError("Port range must be between 1 and 65535.")
+            scan_results = scan_ports(
+                payload.target,
+                payload.start_port,
+                payload.end_port,
+            )
+            scan_data = {
+                "target": payload.target,
+                "results": [result.to_dict() for result in scan_results],
+            }
+            vulnerability_results = NvdClient().lookup_scan_results(scan_data)
+            scan_data["results"] = vulnerability_results
+            return _store_scan(
+                session,
+                scan_data,
+                payload.internet_facing,
+            )
+        except (ValueError, KeyError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+
+    @app.post(
         "/scans",
         response_model=ScanResponse,
         status_code=status.HTTP_201_CREATED,
     )
     def create_scan(payload: ScanInput, session: Session = Depends(get_session)):
-        scan_data = payload.model_dump()
         try:
-            risk_data = assess_scan(scan_data, payload.internet_facing)
+            return _store_scan(
+                session,
+                payload.model_dump(),
+                payload.internet_facing,
+            )
         except (ValueError, KeyError) as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
-
-        scan = Scan(
-            target=payload.target,
-            internet_facing=payload.internet_facing,
-            overall_risk_score=risk_data["overall_risk_score"],
-            overall_severity=risk_data["overall_severity"],
-        )
-        assessments_by_port = {
-            assessment["port"]: assessment for assessment in risk_data["results"]
-        }
-        for port_input in payload.results:
-            if port_input.state != "open":
-                continue
-            assessment = assessments_by_port[port_input.port]
-            port = PortResult(
-                port=port_input.port,
-                protocol=port_input.protocol,
-                state=port_input.state,
-                service=port_input.service,
-                product=port_input.product,
-                version=port_input.version,
-                confidence=port_input.confidence,
-                risk_score=assessment["risk_score"],
-                risk_severity=assessment["severity"],
-                highest_cvss=assessment["highest_cvss"],
-                vulnerability_count=assessment["vulnerability_count"],
-                risk_reasons=json.dumps(assessment["reasons"]),
-            )
-            port.vulnerabilities = [
-                Vulnerability(**vulnerability.model_dump())
-                for vulnerability in port_input.vulnerabilities
-            ]
-            scan.ports.append(port)
-
-        session.add(scan)
-        session.commit()
-        return _serialize_scan(session, scan.id)
 
     @app.get("/scans/{scan_id}", response_model=ScanResponse)
     def get_scan(scan_id: int, session: Session = Depends(get_session)):
@@ -86,6 +97,51 @@ def create_app(database_url=None):
         return _serialize_scan(session, scan.id)
 
     return app
+
+
+def _store_scan(session, scan_data, internet_facing):
+    risk_data = assess_scan(scan_data, internet_facing)
+    scan = Scan(
+        target=scan_data["target"],
+        internet_facing=internet_facing,
+        overall_risk_score=risk_data["overall_risk_score"],
+        overall_severity=risk_data["overall_severity"],
+    )
+    assessments_by_port = {
+        assessment["port"]: assessment for assessment in risk_data["results"]
+    }
+    for result in scan_data["results"]:
+        if result["state"] != "open":
+            continue
+        assessment = assessments_by_port[result["port"]]
+        port = PortResult(
+            port=result["port"],
+            protocol=result.get("protocol", "tcp"),
+            state=result["state"],
+            service=result.get("service", "unknown"),
+            product=result.get("product"),
+            version=result.get("version"),
+            confidence=result.get("confidence"),
+            risk_score=assessment["risk_score"],
+            risk_severity=assessment["severity"],
+            highest_cvss=assessment["highest_cvss"],
+            vulnerability_count=assessment["vulnerability_count"],
+            risk_reasons=json.dumps(assessment["reasons"]),
+        )
+        port.vulnerabilities = [
+            Vulnerability(
+                cve_id=vulnerability["cve_id"],
+                description=vulnerability.get("description", ""),
+                cvss_score=vulnerability.get("cvss_score"),
+                severity=vulnerability.get("severity"),
+                vector=vulnerability.get("vector"),
+            )
+            for vulnerability in result.get("vulnerabilities", [])
+        ]
+        scan.ports.append(port)
+    session.add(scan)
+    session.commit()
+    return _serialize_scan(session, scan.id)
 
 
 def _load_scan(session, scan_id):

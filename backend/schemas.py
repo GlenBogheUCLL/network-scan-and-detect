@@ -29,6 +29,13 @@ class ScanInput(BaseModel):
     results: list[PortInput]
 
 
+class ScanRequest(BaseModel):
+    target: str = Field(min_length=1, max_length=255)
+    start_port: int = Field(ge=1, le=65535)
+    end_port: int = Field(ge=1, le=65535)
+    internet_facing: bool = False
+
+
 class VulnerabilityResponse(VulnerabilityInput):
     model_config = ConfigDict(from_attributes=True)
 

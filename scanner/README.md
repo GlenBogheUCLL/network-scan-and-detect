@@ -110,6 +110,17 @@ vulnerabilities, and risk assessments, and exposes saved scans through
 `GET /scans/{scan_id}`. Interactive API documentation is available at
 `http://127.0.0.1:8000/docs`.
 
+Run the complete pipeline through the API:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/scan `
+  -ContentType "application/json" `
+  -Body '{"target":"127.0.0.1","start_port":1,"end_port":1024}'
+```
+
+This runs the TCP scanner, exact CPE/NVD lookup, risk engine, and database
+storage in one request. The request is synchronous while the scan runs.
+
 The complete local stack also includes the API and a provisioned Grafana
 dashboard:
 
