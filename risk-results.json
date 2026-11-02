@@ -1,0 +1,56 @@
+{
+  "target": "127.0.0.1",
+  "internet_facing": false,
+  "overall_risk_score": 2.5,
+  "overall_severity": "low",
+  "results": [
+    {
+      "port": 135,
+      "service": "unknown",
+      "risk_score": 2.5,
+      "severity": "low",
+      "highest_cvss": 0.0,
+      "vulnerability_count": 0,
+      "reasons": [
+        "Incomplete product/version fingerprint (+1.5).",
+        "Unknown service (+1.0)."
+      ]
+    },
+    {
+      "port": 445,
+      "service": "unknown",
+      "risk_score": 2.5,
+      "severity": "low",
+      "highest_cvss": 0.0,
+      "vulnerability_count": 0,
+      "reasons": [
+        "Incomplete product/version fingerprint (+1.5).",
+        "Unknown service (+1.0)."
+      ]
+    },
+    {
+      "port": 902,
+      "service": "unknown",
+      "risk_score": 2.5,
+      "severity": "low",
+      "highest_cvss": 0.0,
+      "vulnerability_count": 0,
+      "reasons": [
+        "Incomplete product/version fingerprint (+1.5).",
+        "Unknown service (+1.0)."
+      ]
+    },
+    {
+      "port": 912,
+      "service": "unknown",
+      "risk_score": 2.5,
+      "severity": "low",
+      "highest_cvss": 0.0,
+      "vulnerability_count": 0,
+      "reasons": [
+        "Incomplete product/version fingerprint (+1.5).",
+        "Unknown service (+1.0)."
+      ]
+    }
+  ]
+}

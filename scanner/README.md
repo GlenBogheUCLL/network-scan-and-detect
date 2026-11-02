@@ -67,6 +67,24 @@ have an API key, and note that only exact product/version fingerprints are
 queried. Results without a detected product and version are retained with an
 empty vulnerability list.
 
+Calculate transparent risk scores from the vulnerability results:
+
+```powershell
+python scanner/risk_engine.py vulnerability-results.json --output risk-results.json
+```
+
+Add the internet-facing penalty when the scanned machine is exposed to the
+internet:
+
+```powershell
+python scanner/risk_engine.py vulnerability-results.json --internet-facing
+```
+
+Risk scoring starts with the highest CVSS score per open service. It adds
+explicit penalties for incomplete fingerprints, unknown services, exposed FTP,
+Telnet, rlogin or Redis, and optional internet exposure. Scores are capped at
+10, and the overall score is the highest service score rather than an average.
+
 -------------------------
 Technical Goals
 -------------------------
